@@ -108,13 +108,12 @@ pub fn get_area_ha(polygons: &Vec<Polygon>) -> Vec<f64>{
 	areas
 }
 
-
-pub fn classify_overlap(percentage: f64) -> OverlapType {
+pub fn classify_overlap(percentage: f64, minimum_treshold: f64) -> OverlapType {
 	match percentage {
 		0.0 => OverlapType::NoOverlap,
-		p if p > 0.00 && p < 10.00 => OverlapType::MinorOverlap,
-		p if p >= 10.00 && p < 100.00 => OverlapType::MajorOverlap,
-		p if p >= 99.99 => OverlapType::DuplicateGeometry,
+		p if p > 0.00 && p < minimum_treshold => OverlapType::MinorOverlap,
+		p if p >= minimum_treshold && p < 100.00 => OverlapType::MajorOverlap,
+		100.00 => OverlapType::DuplicateGeometry,
 		_ => OverlapType::NoOverlap,
 	}
 }
@@ -146,14 +145,17 @@ pub fn is_intersected_polygon(polygons: &Vec<Polygon>) -> Vec<IntersectionResult
 				let polygon_a_area = i.geodesic_area_signed().abs() / 10_000.00;
 				let intersected_a_percentage =( intersection_area/polygon_a_area) * 100.00;
 
+				let rounded_percentage_str = format!("{:.2}", intersected_a_percentage);
+				let rounded_percentage: f64 = rounded_percentage_str.parse().unwrap();
+
 				let results = IntersectionResult{
 					index: idx,
 					intersect_with: idxj,
 					is_intersect: is_intersected,
-					percentage_area: intersected_a_percentage,
+					percentage_area: rounded_percentage,
 					original_area: polygon_a_area,
 					intersected_area: intersection_area,
-					overlap_type: classify_overlap(intersected_a_percentage)
+					overlap_type: classify_overlap(rounded_percentage, 20.00)
 				};
 
 				intersection_result.push(results)
@@ -161,9 +163,4 @@ pub fn is_intersected_polygon(polygons: &Vec<Polygon>) -> Vec<IntersectionResult
 		}
 	}
 	intersection_result
-}
-
-pub fn float_precision(float: f64, precision: i32) -> f64 {
-	let factor = 10_f64.powi(precision);
-	(factor * float).round() / float
 }
