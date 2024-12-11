@@ -316,6 +316,7 @@ name = "rust_geo"
 version = "0.1.0"
 dependencies = [
  "geo",
+ "rstar",
  "serde",
  "serde_json",
 ]
